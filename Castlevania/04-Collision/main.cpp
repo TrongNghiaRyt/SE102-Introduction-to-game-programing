@@ -83,15 +83,18 @@ void CSampleKeyHander::OnKeyDown(int KeyCode)
 	DebugOut(L"[INFO] KeyDown: %d\n", KeyCode);
 	switch (KeyCode)
 	{
-	case DIK_SPACE:
-		//mario->SetState(MARIO_STATE_JUMP);
-		simon->SetState(SIMON_STATE_JUMP);
+	case DIK_Z:
+		if (simon->IsJumping() == false)
+			simon->SetState(SIMON_STATE_JUMP);
 		break;
 	case DIK_A: // reset
 		//mario->SetState(MARIO_STATE_IDLE);
 		//mario->SetLevel(MARIO_LEVEL_BIG);
 		//mario->SetPosition(50.0f,0.0f);
 		//mario->SetSpeed(0, 0);
+		break;
+	case DIK_X:
+		simon->attack();
 		break;
 	case DIK_NUMPAD0:
 		simon->TestAni();
@@ -113,7 +116,7 @@ void CSampleKeyHander::KeyState(BYTE* states)
 	//	mario->SetState(MARIO_STATE_WALKING_LEFT);
 	//else
 	//	mario->SetState(MARIO_STATE_IDLE);
-
+	if (simon->isAttacking()) return;
 	if (game->IsKeyDown(DIK_RIGHT))
 		simon->SetState(SIMON_STATE_WALKING_RIGHT);
 	else if (game->IsKeyDown(DIK_LEFT))
@@ -123,7 +126,7 @@ void CSampleKeyHander::KeyState(BYTE* states)
 			simon->SetState(SIMON_STATE_SITDOWN_RIGHT);
 		else
 			simon->SetState(SIMON_STATE_SITDOWN_LEFT);
-	else if (simon->GetState() != SIMON_STATE_JUMP)
+	else if (simon->GetState() != SIMON_STATE_JUMP && simon->GetState() != SIMON_STATE_ATTACK)
 		simon->SetState(SIMON_STATE_IDLE);
 }
 
@@ -253,18 +256,18 @@ void LoadResources()
 
 
 
-	ani = new CAnimation(100);		// brick
-	ani->Add(20001);
-	animations->Add(601, ani);
+	//ani = new CAnimation(100);		// brick
+	//ani->Add(20001);
+	//animations->Add(601, ani);
 
-	ani = new CAnimation(300);		// Goomba walk
-	ani->Add(30001);
-	ani->Add(30002);
-	animations->Add(701, ani);
+	//ani = new CAnimation(300);		// Goomba walk
+	//ani->Add(30001);
+	//ani->Add(30002);
+	//animations->Add(701, ani);
 
-	ani = new CAnimation(1000);		// Goomba dead
-	ani->Add(30003);
-	animations->Add(702, ani);
+	//ani = new CAnimation(1000);		// Goomba dead
+	//ani->Add(30003);
+	//animations->Add(702, ani);
 
 	//mario = new CMario();
 	//mario->AddAnimation(400);		// idle right big

@@ -42,6 +42,7 @@
 #define SIMON_LEFT_BBOX	12
 
 #define SIMON_UNTOUCHABLE_TIME 3000
+#define SIMON_ATTACK_TIME	600
 
 class Simon : public CGameObject
 {
@@ -50,10 +51,19 @@ class Simon : public CGameObject
 	
 	int testAni = 0;
 
+	bool Attacking = false;
+	bool startAttack = false;
+	DWORD attackTime = SIMON_ATTACK_TIME;
+
+	bool isJumping = false;
+	bool JumpFall = false;
+
 public:
 	Simon();
+
 	virtual void Update(DWORD dt, vector<LPGAMEOBJECT>* colliable_objects = NULL);
 	virtual void Render();
+
 	void SetState(int state);
 	void StartUntouchable() { untouchable = 1; untouchable_start = GetTickCount(); }
 
@@ -63,5 +73,13 @@ public:
 		if (testAni == animations.size())
 			testAni = 0;
 	}
+
+	bool IsJumping() { return isJumping; }
+
+
+	//simon attack
+	void attack();
+	//void weaponAttack() { isWeapon = true; }
+	bool isAttacking() { return Attacking; }
 };
 
