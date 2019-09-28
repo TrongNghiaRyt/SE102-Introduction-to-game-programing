@@ -31,6 +31,8 @@ class Background
 	vector<int> mapData;
 	vector<LPSPRITE> tiles;
 
+	float cam_x, cam_y;
+
 public:
 	Background();
 	~Background();
@@ -39,9 +41,11 @@ public:
 	void getMap(LPCWSTR filename);		//Map tile on image file to textures
 	void getTiles(LPCWSTR filename);	//Add tiles from textures to tiles vector
 
-	void DrawMap(float viewportX, float viewportY);
+	void DrawMap();
 
 	int GetMapHeight() { return tileHeightNumber * TILEHEIGHT; }
 	int GetMapWidth() { return tileWidthNumber * TILEWIDTH; }
+
+	void GetCamPos(float xv, float yv) { cam_x = xv, cam_y = yv; }
 };
 

@@ -112,13 +112,6 @@ void CGameObject::FilterCollision(
 	if (min_iy>=0) coEventsResult.push_back(coEvents[min_iy]);
 }
 
-
-void CGameObject::SetDrawPoint(float viewportX, float viewportY)
-{
-	xcam = x - viewportX;
-	ycam = y - viewportY;
-}
-
 void CGameObject::RenderBoundingBox()
 {
 	D3DXVECTOR3 p(x, y, 0);
@@ -152,7 +145,7 @@ void CGameObject::RenderBoundingBox(float x1, float y1)
 	rect.right = (int)r - (int)l;
 	rect.bottom = (int)b - (int)t;
 
-	CGame::GetInstance()->Draw(xcam + x1, ycam + y1, bbox, rect.left, rect.top, rect.right, rect.bottom, 32);
+	CGame::GetInstance()->Draw(x + x1, y + y1, bbox, rect.left, rect.top, rect.right, rect.bottom, 32);
 }
 
 void CGameObject::AddAnimation(int aniId)

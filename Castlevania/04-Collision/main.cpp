@@ -51,6 +51,7 @@
 #define ID_TEX_MISC 20
 
 #define ID_TEX_SIMON 100
+#define ID_TEX_ROPE	200
 
 CGame *game;
 
@@ -116,7 +117,9 @@ void CSampleKeyHander::KeyState(BYTE* states)
 	//	mario->SetState(MARIO_STATE_WALKING_LEFT);
 	//else
 	//	mario->SetState(MARIO_STATE_IDLE);
-	if (simon->isAttacking()) return;
+	if (simon->isAttacking()) 
+		return;
+
 	if (game->IsKeyDown(DIK_RIGHT))
 		simon->SetState(SIMON_STATE_WALKING_RIGHT);
 	else if (game->IsKeyDown(DIK_LEFT))
@@ -160,6 +163,7 @@ void LoadResources()
 	textures->Add(ID_TEX_HP, L"textures\\hp.png", D3DCOLOR_XRGB(0, 0, 0));
 	textures->Add(ID_TEX_BOX, L"textures\\weaponBox2.png", D3DCOLOR_XRGB(0, 0, 0));
 	textures->Add(ID_TEX_SIMON, L"textures\\simon.png", D3DCOLOR_XRGB(255, 255, 255));
+	textures->Add(ID_TEX_ROPE, L"textures\\rope.png", D3DCOLOR_XRGB(255, 255, 255));
 
 	bg.getMap(L"textures\\map1_512.png");
 	bg.getMapData(L"text\\map11.txt");
@@ -294,9 +298,6 @@ void LoadResources()
 	wall->SetPosition(0, 400 - 32);
 	wall->SetHeightWidth(64, 32*30);
 	objects.push_back(wall);
-
-
-
 }
 
 /*
@@ -368,18 +369,29 @@ void Update(DWORD dt)
 
 	//DebugOut(L"x = %f, y = %f\n", viewportX, viewportY);
 	//DebugOut(L"xs = %f, ys = %f\n", xs, ys);
+	//--------------
+	//float sx, sy;
+	//simon->GetPosition(sx, sy);
+	//viewportX = sx - 512 / 2;
+	//
+	//if (sx < 512 / 2)
+	//	viewportX = 0;
 
-	float sx, sy;
-	simon->GetPosition(sx, sy);
-	viewportX = sx - 512 / 2;
-	
-	if (sx < 512 / 2)
-		viewportX = 0;
+	// Update camera to follow mario
+	float cx, cy;
+	simon->GetPosition(cx, cy);
 
-	for (int i = 0; i < objects.size(); i++)
-	{
-		objects[i]->SetDrawPoint(viewportX, viewportY);
-	}
+	if (cx < SCREEN_WIDTH / 2) cx = 0;
+	else cx -= SCREEN_WIDTH / 2;
+	cy -= SCREEN_HEIGHT / 2;
+	//if (cx < 512 / 2) cx = 0;
+	bg.GetCamPos(cx, 0.0);
+	CGame::GetInstance()->SetCamPos(cx, 0.0f /*cy*/);
+
+	//for (int i = 0; i < objects.size(); i++)
+	//{
+	//	objects[i]->SetDrawPoint(viewportX, viewportY);
+	//}
 	hud.Update(dt);
 }
 
@@ -400,7 +412,7 @@ void Render()
 		spriteHandler->Begin(D3DXSPRITE_ALPHABLEND);
 
 		//bg.DrawMap(viewportX, viewportY);
-		bg.DrawMap(viewportX, viewportY);
+		bg.DrawMap();
 
 		for (int i = 0; i < objects.size(); i++)
 			objects[i]->Render();

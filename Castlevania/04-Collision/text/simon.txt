@@ -17,7 +17,9 @@ simonAttack_L	11007	497	70	542	135
 simonSitAtk_R	10008	300	4	349	69
 simonSitAtk_R	10009	360	4	409	69
 simonSitAtk_R	10010	420	4	481	69
-simonSitAtk_L	11008	613	4	678	69
-simonSitAtk_L	11009	553	4	602	69
-simonSitAtk_L	11010	493	4	542	69
+simonSitAtk_L	11008	617	4	678	69
+simonSitAtk_L	11009	557	4	602	69
+simonSitAtk_L	11010	497	4	542	69
+simonJump_R	10011	240	18	289	69
+simonJump_L	11011	677	22	726	69
 eff		0	0	0	0	0	

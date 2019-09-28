@@ -36,9 +36,6 @@ public:
 
 	float x; 
 	float y;
-	//Position on viewport
-	float xcam;
-	float ycam;
 
 	float dx;	// dx = vx*dt
 	float dy;	// dy = vy*dt
@@ -55,7 +52,6 @@ public:
 	vector<LPANIMATION> animations;
 
 public:
-	void SetDrawPoint(float viewportX, float viewportY);
 
 	void SetPosition(float x, float y) { this->x = x, this->y = y; }
 	void SetSpeed(float vx, float vy) { this->vx = vx, this->vy = vy; }

@@ -24,6 +24,9 @@ void HUD::Create()
 
 void HUD::Draw()
 {
+	int alpha = 255;
+	bool view = false;
+
 	CGame::GetInstance()->FontPrint(1, 16, L"SCORE-       TIME      STAGE ");
 
 	//CGame::GetInstance()->FontPrint(1 + 96, 16, FillNumber(111, 6));
@@ -45,17 +48,17 @@ void HUD::Draw()
 	for (int i = 0; i < n; i++)
 	{
 		//Player HP
-		HP->Draw(110 + i * 9, 16 + 17);
-		simonHP->Draw(110 + i * 9, 16 + 17);
+		HP->Draw(110 + i * 9, 16 + 17, alpha, view);
+		simonHP->Draw(110 + i * 9, 16 + 17, alpha, view);
 		CGame::GetInstance()->FontPrint(272 + 95, 16 + 17, L"-05");
 
 		//Enemy HP
-		HP->Draw(110 + i * 9, 16 + 17 + 17);
-		enemyHP->Draw(110 + i * 9, 16 + 17 + 17);
+		HP->Draw(110 + i * 9, 16 + 17 + 17, alpha, view);
+		enemyHP->Draw(110 + i * 9, 16 + 17 + 17, alpha, view);
 		CGame::GetInstance()->FontPrint(272 + 95 - 15, 16 + 17 + 17, L"P-05");
 	}
 
-	box->Draw(272, 16 + 17);
+	box->Draw(272, 16 + 17, alpha, view);
 
 }
 

@@ -8,7 +8,7 @@ Wall::Wall(int h1, int w1)
 
 void Wall::Render()
 {
-	//RenderBoundingBox();
+	RenderBoundingBox();
 }
 
 void Wall::GetBoundingBox(float& l, float& t, float& r, float& b)

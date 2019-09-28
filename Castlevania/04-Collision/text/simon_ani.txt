@@ -24,4 +24,6 @@ simonSitAtk_R	10010	1009	200
 simonSitAtk_L	11008	1010	200
 simonSitAtk_L	11009	1010	200
 simonSitAtk_L	11010	1010	200
+simonJump_R	10011	1011	100
+simonJump_L	11011	1012	100
 eff		0	0	0

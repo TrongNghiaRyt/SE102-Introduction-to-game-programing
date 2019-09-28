@@ -132,6 +132,7 @@
     <ClInclude Include="Goomba.h" />
     <ClInclude Include="HUD.h" />
     <ClInclude Include="Mario.h" />
+    <ClInclude Include="Rope.h" />
     <ClInclude Include="Simon.h" />
     <ClInclude Include="Sprites.h" />
     <ClInclude Include="Textures.h" />
@@ -148,6 +149,7 @@
     <ClCompile Include="HUD.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mario.cpp" />
+    <ClCompile Include="Rope.cpp" />
     <ClCompile Include="Simon.cpp" />
     <ClCompile Include="Sprites.cpp" />
     <ClCompile Include="Textures.cpp" />

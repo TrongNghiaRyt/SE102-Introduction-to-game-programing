@@ -82,7 +82,7 @@ void CGoomba::Render()
 		ani = GOOMBA_ANI_DIE;
 	}
 
-	animations[ani]->Render(xcam,ycam);
+	animations[ani]->Render(x,y);
 	//RenderBoundingBox();
 }
 

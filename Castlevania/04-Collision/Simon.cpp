@@ -12,6 +12,13 @@ Simon::Simon() : CGameObject()
 	this->AddAmimationFromFile(PATH_SIMON_ANI);
 
 	untouchable = 0;
+
+	rope = new Rope();
+}
+
+Simon::~Simon()
+{
+	delete rope;
 }
 
 void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
@@ -28,42 +35,52 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 
 	coEvents.clear();
 
-	if (/*this->isAttacking()*/state==SIMON_STATE_ATTACK)
-	{
-		if (startAttack == false)
-		{
-			startAttack = true;
-			attackTime += GetTickCount();
+	//if (this->isAttacking())
+	//{
+	//	if (startAttack == false)
+	//	{
+	//		startAttack = true;
+	//		attackTime += GetTickCount();
 
-		}
-		else
-		{
-			float remain = attackTime - GetTickCount();
-			//DebugOut(L"[INFO] Remain Time: %f\n", remain);
-			//DebugOut(L"[INFO] get tick: %X\n", GetTickCount());
+	//	}
+	//	else
+	//	{
+	//		float remain = attackTime - GetTickCount();
+	//		//DebugOut(L"[INFO] Remain Time: %f\n", remain);
+	//		//DebugOut(L"[INFO] get tick: %X\n", GetTickCount());
 
-			if (remain <= SIMON_ATTACK_TIME / 3); //rope->SetLastFrame();
-			if (remain <= 0 || remain > SIMON_ATTACK_TIME + 10)
-			{
-				Attacking = false;
-				startAttack = false;
-				remain = 0;
-				attackTime = SIMON_ATTACK_TIME;
-				animations[SIMON_ANI_ATTACK_LEFT]->Reset();
-				animations[SIMON_ANI_ATTACK_RIGHT]->Reset();
+	//		if (remain <= SIMON_ATTACK_TIME / 3); rope->SetLastFrame();
+	//		if (remain <= 0 || remain > SIMON_ATTACK_TIME + 10)
+	//		{
+	//			rope->reset();
+	//			Attacking = false;
+	//			startAttack = false;
+	//			remain = 0;
+	//			attackTime = SIMON_ATTACK_TIME;
+	//			animations[SIMON_ANI_ATTACK_LEFT]->Reset();
+	//			animations[SIMON_ANI_ATTACK_RIGHT]->Reset();
 
-				this->SetState(SIMON_STATE_IDLE);
-			}
-		}
-		//Update rope position to simon gravity.
-		int tempx = x + dx, tempy = y + dy;
-	}
+	//			if (state == SIMON_STATE_SITDOWN_ATTACK) 
+	//				if (nx > 0) this->SetState(SIMON_STATE_SITDOWN_RIGHT);
+	//				else this->SetState(SIMON_STATE_SITDOWN_LEFT);
+	//			else this->SetState(SIMON_STATE_IDLE);
+	//		}
+	//	}
+	//	//Update rope position to simon gravity.
+	//	int tempx = x + dx, tempy = y + vy;
+
+	//	rope->SetSimonPosiiton(tempx, tempy, nx);
+	//	if (state == SIMON_STATE_SITDOWN_ATTACK)
+	//		rope->SetSimonPosiiton(x, y + SIMON_SITDOWN_HEIGHT_CHANGE, nx);
+
+	//	rope->Update(dt, coObjects);
+	//}
 
 	// turn off collision when die 
 	if (state != SIMON_STATE_DIE)
 		CalcPotentialCollisions(coObjects, coEvents);
 
-	if (this->vy >= 0.075 && isJumping == true)
+	if (this->vy >= /*0.075*/ 0.1 && isJumping == true)
 		JumpFall = true;
 
 	// reset untouchable timer if untouchable time has passed
@@ -99,7 +116,14 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 			isJumping = false;
 			JumpFall = false;
 		}
+		if (isAttacking())
+		{
+			//int tempx = x + dx, tempy = y + vy;
 
+			//rope->SetSimonPosiiton(x, y, nx);
+			//if (state == SIMON_STATE_SITDOWN_ATTACK)
+			//	rope->SetSimonPosiiton(x, y + SIMON_SITDOWN_HEIGHT_CHANGE, nx);
+		}
 		// Collision logic with Goombas
 		for (UINT i = 0; i < coEventsResult.size(); i++)
 		{
@@ -109,6 +133,47 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 
 	// clean up collision events
 	for (UINT i = 0; i < coEvents.size(); i++) delete coEvents[i];
+
+	if (this->isAttacking())
+	{
+		if (startAttack == false)
+		{
+			startAttack = true;
+			attackTime += GetTickCount();
+
+		}
+		else
+		{
+			float remain = attackTime - GetTickCount();
+			//DebugOut(L"[INFO] Remain Time: %f\n", remain);
+			//DebugOut(L"[INFO] get tick: %X\n", GetTickCount());
+
+			if (remain <= SIMON_ATTACK_TIME / 3); rope->SetLastFrame();
+			if (remain <= 0 || remain > SIMON_ATTACK_TIME + 10)
+			{
+				rope->reset();
+				Attacking = false;
+				startAttack = false;
+				remain = 0;
+				attackTime = SIMON_ATTACK_TIME;
+				animations[SIMON_ANI_ATTACK_LEFT]->Reset();
+				animations[SIMON_ANI_ATTACK_RIGHT]->Reset();
+
+				if (state == SIMON_STATE_SITDOWN_ATTACK)
+					if (nx > 0) this->SetState(SIMON_STATE_SITDOWN_RIGHT);
+					else this->SetState(SIMON_STATE_SITDOWN_LEFT);
+				else this->SetState(SIMON_STATE_IDLE);
+			}
+		}
+		//Update rope position to simon gravity.
+		//int tempx = x + dx, tempy = y + vy;
+
+		rope->SetSimonPosiiton(x, y, nx);
+		if (state == SIMON_STATE_SITDOWN_ATTACK)
+			rope->SetSimonPosiiton(x, y + SIMON_SITDOWN_HEIGHT_CHANGE, nx);
+
+		rope->Update(dt, coObjects);
+	}
 }
 
 void Simon::Render()
@@ -135,21 +200,26 @@ void Simon::Render()
 		ani = SIMON_ANI_SITDOWN_RIGHT;
 	else if (state == SIMON_STATE_SITDOWN_LEFT)
 		ani = SIMON_ANI_SITDOWN_LEFT;
-	else if (/*this->isAttacking()*/state == SIMON_STATE_ATTACK)
+	else if (this->isAttacking())
 	{
-		if (nx > 0) ani = SIMON_ANI_ATTACK_RIGHT;
-		else ani = SIMON_ANI_ATTACK_LEFT;
-		DebugOut(L"state: %d\n", state);
+		if (state == SIMON_STATE_SITDOWN_ATTACK)
+			if (nx > 0) ani = SIMON_ANI_SIT_ATTACK_RIGHT;
+			else ani = SIMON_ANI_SIT_ATTACK_LEFT;
+		else
+			if (nx > 0) ani = SIMON_ANI_ATTACK_RIGHT;
+			else ani = SIMON_ANI_ATTACK_LEFT;
 	}
-	//else if (isJumping)
-	//{
-	//	if (JumpFall)
-	//		if (nx > 0) ani = SIMON_ANI_IDLE_RIGHT;
-	//		else ani = SIMON_ANI_IDLE_LEFT;
-	//	else
-	//		if (nx > 0) ani = SIMON_ANI_SIT_RIGHT;
-	//		else ani = SIMON_ANI_SIT_LEFT;
-	//}
+	else if (isJumping)
+	{
+		if (JumpFall)
+			if (nx > 0) ani = SIMON_ANI_IDLE_RIGHT;
+			else ani = SIMON_ANI_IDLE_LEFT;
+		else
+			//if (nx > 0) ani = SIMON_ANI_SITDOWN_RIGHT;
+			//else ani = SIMON_ANI_SITDOWN_LEFT;
+			if (nx > 0) ani = SIMON_ANI_JUMP_RIGHT;
+			else ani = SIMON_ANI_JUMP_LEFT;
+	}
 	else if (vx == 0)
 	{
 		if (nx > 0) ani = SIMON_ANI_IDLE_RIGHT;
@@ -162,14 +232,14 @@ void Simon::Render()
 
 	int alpha = 255;
 	if (untouchable) alpha = 128;
-	animations[ani]->Render(xcam, ycam, alpha);
+	animations[ani]->Render(x, y, alpha);
 	//animations[testAni]->Render(xcam, ycam, alpha);
 
 	if (nx > 0) RenderBoundingBox(SIMON_RIGHT_BBOX, 0);
 	else RenderBoundingBox(SIMON_LEFT_BBOX, 0);
 	//RenderBoundingBox();
 
-
+	if (isAttacking()) rope->Render();
 }
 
 void Simon::SetState(int state)
@@ -234,18 +304,23 @@ void Simon::GetBoundingBox(float& left, float& top, float& right, float& bottom)
 void Simon::attack()
 {
 	Attacking = true;
-	this->SetState(SIMON_STATE_ATTACK);
-	//state = SIMON_STATE_ATTACK;
 	vx = 0;
+	//this->SetState(SIMON_STATE_ATTACK);
+	////state = SIMON_STATE_ATTACK;
+	//vx = 0;
+	//this->SetState(SIMON_STATE_ATTACK);
+	//rope->SetSimonPosiiton(x, y, nx);
 
-	//if (state == SIMON_STATE_SITDOWN)
-	//{
-	//	this->SetState(SIMON_STATE_SIT_ATTACK);
-	//	rope->SetSimonPosiiton(x, y + SIMON_SITDOWN_HEIGHT_CHANGE, nx);
-	//}
-	//else
-	//{
-	//	this->SetState(SIMON_STATE_ATTACK);
-	//	rope->SetSimonPosiiton(x, y, nx);
-	//}
+	if (state == SIMON_STATE_SITDOWN_LEFT  || 
+		state == SIMON_STATE_SITDOWN_RIGHT || 
+		state == SIMON_STATE_SITDOWN_ATTACK)
+	{
+		this->SetState(SIMON_STATE_SITDOWN_ATTACK);
+		rope->SetSimonPosiiton(x, y + SIMON_SITDOWN_HEIGHT_CHANGE, nx);
+	}
+	else
+	{
+		this->SetState(SIMON_STATE_ATTACK);
+		rope->SetSimonPosiiton(x, y, nx);
+	}
 }

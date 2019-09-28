@@ -64,17 +64,15 @@ void Background::getTiles(LPCWSTR filename)
 	file.close();
 }
 
-void Background::DrawMap(float viewportX, float viewportY)
+void Background::DrawMap()
 {
 	int tilenum = 0;
 	int count = -1;
 	int columns, rows;
 
 	//calculate starting tile position
-	//Have some issue with Float. Use integer instead.
-	int tilex = viewportX / TILEWIDTH;
-	int tiley = viewportY / TILEHEIGHT;
-	
+	int tilex = cam_x / TILEWIDTH;
+	int tiley = cam_y / TILEHEIGHT;
 
 	//calculate the number of columns and rows
 	columns = SCREEN_WIDTH / TILEWIDTH;
@@ -95,11 +93,9 @@ void Background::DrawMap(float viewportX, float viewportY)
 			int x = j * TILEWIDTH + tilex * TILEWIDTH;
 			int y = i * TILEHEIGHT + tiley * TILEHEIGHT;
 
-			float tempx = x - viewportX;
-			float tempy = y - viewportY;
-
 			//draw the tile onto the scroll buffer
-			tiles[tilenum]->Draw(tempx, tempy+64+16);
+			//tiles[tilenum]->Draw(tempx, tempy+64+16);
+			tiles[tilenum]->Draw(x, y + 64 + 16);
 		}
 	}
 }
