@@ -2,7 +2,7 @@
 #include "GameObject.h"
 #include "Textures.h"
 
-#define ID_TEX_ROPE				200
+#define ID_TEX_ROPE				2000
 #define PATH_ROPE_SPRITE	L"text\\rope.txt"
 #define PATH_ROPE_ANI		L"text\\rope_ani.txt"
 
@@ -13,8 +13,8 @@
 #define ROPE_BBOX_WIDTH			46
 #define ROPE_MAX_BBOX_HEIGHT	16
 #define ROPE_MAX_BBOX_WIDTH		78
-#define ROPE_X_BBOX_SIMON	37
-#define ROPE_Y_BBOX_SIMON	5
+#define ROPE_X_BBOX_SIMON	75
+#define ROPE_Y_BBOX_SIMON	17
 
 #define ROPE_SIMON_POSITION_X_RIGHT	-16
 #define ROPE_SIMON_POSITION_X_LEFT	22
@@ -26,7 +26,7 @@ class Rope: public CGameObject
 	bool isLastFrame = false;
 	bool isLeft = false;
 	int currentRope = 0;
-
+	vector<LPGAMEOBJECT>* obj;
 public:
 	Rope();
 	~Rope();
@@ -40,7 +40,9 @@ public:
 	void Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects);
 	void Render();
 
+	void getObjects(vector<LPGAMEOBJECT>* a) { obj = a; }
 
 	void Upgrade() { if (currentRope < 2) currentRope++; }
+	void DeleteObjects(LPGAMEOBJECT a, vector<LPGAMEOBJECT>* objects);
 };
 

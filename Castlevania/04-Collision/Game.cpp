@@ -304,6 +304,25 @@ void CGame::SweptAABB(
 
 }
 
+void CGame::AABB(float l1, float t1, float r1, float b1, float l2, float t2, float r2, float b2, float& t, float& nx, float& ny)
+{
+	nx = ny = 0;
+	t = -1.0;
+
+	float left = l2 - r1;
+	float top = t2 - b1;
+	float right = r2 - l1;
+	float bottom = b2 - t1;
+
+	if (left <= 0 && top <= 0 && right >= 0 && bottom >= 0)
+	{
+		nx = ny = 1;
+		t = 0.5;
+		return;
+	}
+	return;
+}
+
 LPD3DXFONT CGame::MakeFont(LPCWSTR name, int size)
 {
 	LPD3DXFONT f = NULL;

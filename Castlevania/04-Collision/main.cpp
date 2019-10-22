@@ -36,6 +36,9 @@
 #include "Background.h"
 #include "HUD.h"
 #include "Simon.h"
+#include "BigCandle.h"
+#include "CollectableObject.h"
+#include "Weapon.h"
 
 #define WINDOW_CLASS_NAME L"SampleWindow"
 #define MAIN_WINDOW_TITLE L"04 - Collision"
@@ -46,12 +49,21 @@
 
 #define MAX_FRAME_RATE 120
 
+#define ID_TEX_HP	1000
+#define ID_TEX_BOX	1001
+
 #define ID_TEX_MARIO 10
 #define ID_TEX_ENEMY 15
 #define ID_TEX_MISC 20
 
 #define ID_TEX_SIMON 100
-#define ID_TEX_ROPE	200
+
+
+#define ID_TEX_ROPE	2000
+#define ID_TEX_WEAPON 2500
+#define ID_TEX_BIGCANDLE 1005
+#define ID_TEX_CANDLE	1010
+#define ID_TEX_ITEMS	1500
 
 CGame *game;
 
@@ -61,7 +73,9 @@ Wall* wall;
 Background bg;
 Background bg2;
 Simon* simon;
-
+BigCandle* bigCandle;
+CollectableObject* collect;
+Weapon* wea;
 HUD hud;
 
 LPD3DXFONT fontNES = NULL;
@@ -82,10 +96,14 @@ CSampleKeyHander * keyHandler;
 void CSampleKeyHander::OnKeyDown(int KeyCode)
 {
 	DebugOut(L"[INFO] KeyDown: %d\n", KeyCode);
+	if (simon->isAttacking() ||
+		simon->GetState() == SIMON_STATE_FLASHING)
+		return;
+
 	switch (KeyCode)
 	{
-	case DIK_Z:
-		if (simon->IsJumping() == false)
+	case DIK_X:
+		if (simon->IsJumping() == false && simon->isSitting()==false)
 			simon->SetState(SIMON_STATE_JUMP);
 		break;
 	case DIK_A: // reset
@@ -94,7 +112,10 @@ void CSampleKeyHander::OnKeyDown(int KeyCode)
 		//mario->SetPosition(50.0f,0.0f);
 		//mario->SetSpeed(0, 0);
 		break;
-	case DIK_X:
+	case DIK_C:
+		simon->setWeapon();
+		break;
+	case DIK_Z:
 		simon->attack();
 		break;
 	case DIK_NUMPAD0:
@@ -117,13 +138,22 @@ void CSampleKeyHander::KeyState(BYTE* states)
 	//	mario->SetState(MARIO_STATE_WALKING_LEFT);
 	//else
 	//	mario->SetState(MARIO_STATE_IDLE);
-	if (simon->isAttacking()) 
+	if (simon->isAttacking() ||
+		simon->GetState() == SIMON_STATE_FLASHING)
 		return;
 
 	if (game->IsKeyDown(DIK_RIGHT))
-		simon->SetState(SIMON_STATE_WALKING_RIGHT);
+		if (simon->GetState() == SIMON_STATE_SITDOWN_LEFT ||
+			simon->GetState() == SIMON_STATE_SITDOWN_RIGHT)
+			simon->SetState(SIMON_STATE_SITDOWN_RIGHT);
+		else
+			simon->SetState(SIMON_STATE_WALKING_RIGHT);
 	else if (game->IsKeyDown(DIK_LEFT))
-		simon->SetState(SIMON_STATE_WALKING_LEFT);
+		if (simon->GetState() == SIMON_STATE_SITDOWN_RIGHT ||
+			simon->GetState() == SIMON_STATE_SITDOWN_LEFT)
+			simon->SetState(SIMON_STATE_SITDOWN_LEFT);
+		else
+			simon->SetState(SIMON_STATE_WALKING_LEFT);
 	else if (game->IsKeyDown(DIK_DOWN))
 		if (simon->getNx() > 0)
 			simon->SetState(SIMON_STATE_SITDOWN_RIGHT);
@@ -164,6 +194,9 @@ void LoadResources()
 	textures->Add(ID_TEX_BOX, L"textures\\weaponBox2.png", D3DCOLOR_XRGB(0, 0, 0));
 	textures->Add(ID_TEX_SIMON, L"textures\\simon.png", D3DCOLOR_XRGB(255, 255, 255));
 	textures->Add(ID_TEX_ROPE, L"textures\\rope.png", D3DCOLOR_XRGB(255, 255, 255));
+	textures->Add(ID_TEX_BIGCANDLE, L"textures\\items\\BigCandle.png", D3DCOLOR_XRGB(255, 255, 255));
+	textures->Add(ID_TEX_ITEMS, L"textures\\items\\Collectable.png", D3DCOLOR_XRGB(255, 255, 255));
+	textures->Add(ID_TEX_WEAPON, L"textures\\weapon.png", D3DCOLOR_XRGB(255, 255, 255));
 
 	bg.getMap(L"textures\\map1_512.png");
 	bg.getMapData(L"text\\map11.txt");
@@ -288,16 +321,49 @@ void LoadResources()
 
 	//mario->SetPosition(50.0f, 0);
 	//objects.push_back(mario);
-
 	simon = new Simon();
 	simon->SetPosition(100, 100);
+	simon->getObjects(&objects);
 	objects.push_back(simon);
 
-	Wall* wall = new Wall(32, 32*30);
+	Wall* wall = new Wall(32, bg.GetMapWidth());
 	//Wall* wall = new Wall();
 	wall->SetPosition(0, 400 - 32);
-	wall->SetHeightWidth(64, 32*30);
+	//wall->SetHeightWidth(32, bg.GetMapWidth());
 	objects.push_back(wall);
+	
+	Wall* wall2 = new Wall(bg.GetMapHeight(), 32);
+	wall2->SetPosition(-32 - 12, 0);
+	objects.push_back(wall2);
+
+	Wall* wall3 = new Wall(bg.GetMapHeight(), 32);
+	//Wall* wall = new Wall();
+	wall3->SetPosition(bg.GetMapWidth(), 0);
+	//wall->SetHeightWidth(32, bg.GetMapWidth());
+	objects.push_back(wall3);
+
+	for (int i = 0; i < 4; i=i+2)
+	{
+		BigCandle* bigCandle = new BigCandle(BIGHEART);
+		bigCandle->SetPosition(16 + 32 * 5 + i * 64 * 4, 64 + 16 + 3 * 64 + 32);
+		objects.push_back(bigCandle);
+	}
+	for (int i = 1; i < 4; i = i + 2)
+	{
+		BigCandle* bigCandle = new BigCandle(ROPEUPGRADE);
+		bigCandle->SetPosition(16 + 32 * 5 + i * 64 * 4, 64 + 16 + 3 * 64 + 32);
+		objects.push_back(bigCandle);
+	}
+	BigCandle* bigCandle = new BigCandle(DANGGER);
+	bigCandle->SetPosition(16 + 32 * 5 + 4 * 64 * 4, 64 + 16 + 3 * 64 + 32);
+	objects.push_back(bigCandle);
+
+	Weapon* wea = new Weapon();
+	wea->SetState(WEAPON_DANGGER);
+	wea->SetPosition(100, 300);
+	wea->getObjects(&objects);
+	//objects.push_back(wea);
+
 }
 
 /*
@@ -383,6 +449,9 @@ void Update(DWORD dt)
 
 	if (cx < SCREEN_WIDTH / 2) cx = 0;
 	else cx -= SCREEN_WIDTH / 2;
+
+	if (cx > bg.GetMapWidth() - SCREEN_WIDTH) cx = bg.GetMapWidth() - SCREEN_WIDTH;
+
 	cy -= SCREEN_HEIGHT / 2;
 	//if (cx < 512 / 2) cx = 0;
 	bg.GetCamPos(cx, 0.0);
@@ -414,8 +483,9 @@ void Render()
 		//bg.DrawMap(viewportX, viewportY);
 		bg.DrawMap();
 
-		for (int i = 0; i < objects.size(); i++)
+		for (int i = 1; i < objects.size(); i++)
 			objects[i]->Render();
+		objects[0]->Render();
 
 		hud.Draw(); 
 

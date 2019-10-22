@@ -1,0 +1,4 @@
+Animation_Name	sID	aniID	Time
+BigCandle	5000	500	100
+BigCandle	5001	500	100
+eff		0	0	0

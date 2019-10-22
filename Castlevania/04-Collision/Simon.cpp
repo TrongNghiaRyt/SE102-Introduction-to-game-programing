@@ -1,5 +1,7 @@
 #include "Simon.h"
 #include "debug.h"
+#include "BigCandle.h"
+#include "Weapon.h"
 
 Simon::Simon() : CGameObject()
 {
@@ -33,8 +35,219 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 	vector<LPCOLLISIONEVENT> coEvents;
 	vector<LPCOLLISIONEVENT> coEventsResult;
 
-	coEvents.clear();
+	vector<LPCOLLISIONEVENT> coStaticEvents;
+	vector<LPCOLLISIONEVENT> coStaticEventsResult;
 
+	coEvents.clear();
+	coStaticEvents.clear();
+
+	if (state == SIMON_STATE_FLASHING)
+	{
+		if (startFlashing == false)
+		{
+			startFlashing = true;
+			FlashingTime += GetTickCount();
+		}
+		else
+		{
+			float remain = FlashingTime - GetTickCount();
+
+			if (remain <= 0 || remain > SIMON_FLASHING_TIME + 10)
+			{
+				state = SIMON_STATE_IDLE;
+				startFlashing = false;
+				remain = 0;
+				FlashingTime = SIMON_FLASHING_TIME;
+			}
+		}
+	}
+
+	if (this->isAttacking())
+	{
+		if (startAttack == false)
+		{
+			startAttack = true;
+			attackTime += GetTickCount();
+		}
+		else
+		{
+			float remain = attackTime - GetTickCount();
+			//DebugOut(L"[INFO] Remain Time: %f\n", remain);
+			//DebugOut(L"[INFO] get tick: %X\n", GetTickCount());
+
+			if (remain <= SIMON_ATTACK_TIME / 3) rope->SetLastFrame();
+			if (remain <= 0 || remain > SIMON_ATTACK_TIME + 10)
+			{
+				rope->reset();
+				Attacking = false;
+				startAttack = false;
+				remain = 0;
+				attackTime = SIMON_ATTACK_TIME;
+				animations[SIMON_ANI_ATTACK_LEFT]->Reset();
+				animations[SIMON_ANI_ATTACK_RIGHT]->Reset();
+
+				if (state == SIMON_STATE_SITDOWN_ATTACK)
+					if (nx > 0) this->SetState(SIMON_STATE_SITDOWN_RIGHT);
+					else this->SetState(SIMON_STATE_SITDOWN_LEFT);
+				else this->SetState(SIMON_STATE_IDLE);
+				
+				//Weapon ereas
+				if (isWeapon) {
+					Weapon* weapon = new Weapon();
+					weapon->SetState(weaponType);
+					weapon->SetPosition(this->x, this->y);
+					weapon->getObjects(obj);
+					weapon->setNx(this->nx);
+					obj->push_back(weapon);
+				}
+
+				isWeapon = false;
+			}
+		}
+		//Update rope position to simon gravity.
+		//int tempx = x + dx, tempy = y + vy;
+		if (!isWeapon)
+		{
+			rope->SetSimonPosiiton(x, y, nx);
+			if (state == SIMON_STATE_SITDOWN_ATTACK)
+				rope->SetSimonPosiiton(x, y + SIMON_SITDOWN_HEIGHT_CHANGE, nx);
+			rope->getObjects(obj);
+			rope->Update(dt, coObjects);
+		}
+	}
+
+	// turn off collision when die 
+	if (state != SIMON_STATE_DIE)
+	{
+		//Add objects that can be conllision with simon.
+		vector<LPGAMEOBJECT> temp;
+		for (int i = 0; i < coObjects->size(); i++)
+			if (!dynamic_cast<BigCandle*>((*coObjects)[i]))
+				temp.push_back((*coObjects)[i]);
+
+		//Static objs
+		//vector<LPGAMEOBJECT> tempStatic;
+		//for (int i = 0; i < coObjects->size(); i++)
+		//	//if (dynamic_cast<CollectableObject*>((*coObjects)[i]))
+		//	if (!dynamic_cast<BigCandle*>((*coObjects)[i]))
+		//		tempStatic.push_back((*coObjects)[i]);
+
+
+		CalcPotentialCollisions(&temp, coEvents);
+		//CalcPotentialStaticCollisions(&tempStatic, coStaticEvents);
+	}
+
+
+	if (this->vy >= /*0.075*/ 0.1 && isJumping == true)
+		JumpFall = true;
+
+	// reset untouchable timer if untouchable time has passed
+	if (GetTickCount() - untouchable_start > SIMON_UNTOUCHABLE_TIME)
+	{
+		untouchable_start = 0;
+		untouchable = 0;
+	}
+
+	//Calc static objs first
+	/*if (coStaticEvents.size() != 0)
+	{
+		float min_tx, min_ty, nx = 0, ny;
+
+		FilterCollision(coStaticEvents, coStaticEventsResult, min_tx, min_ty, nx, ny);
+
+		for (UINT i = 0; i < coStaticEventsResult.size(); i++)
+		{
+			LPCOLLISIONEVENT e = coStaticEventsResult[i];
+
+			if (dynamic_cast<CollectableObject*>(e->obj))
+			{
+				CollectableObject* cObj = dynamic_cast<CollectableObject*>(e->obj);
+				int cObjState = cObj->GetState();
+
+				switch (cObjState) {
+				case BIGHEART:
+					heart + 5;
+					DeleteObjects(cObj);
+					break;
+				case ROPEUPGRADE:
+					rope->Upgrade();
+					this->SetState(SIMON_STATE_FLASHING);
+					DeleteObjects(cObj);
+					state = SIMON_STATE_FLASHING;
+					break;
+				}
+				DeleteObjects(cObj);
+			}
+		}
+	}*/
+
+	// No collision occured, proceed normally
+	if (coEvents.size() == 0)
+	{
+		x += dx;
+		y += dy;
+	}
+	else
+	{
+		float min_tx, min_ty, nx = 0, ny;
+
+		FilterCollision(coEvents, coEventsResult, min_tx, min_ty, nx, ny);
+
+		// block 
+		x += min_tx * dx + nx * 0.2f;		// nx*0.4f : need to push out a bit to avoid overlapping next frame
+		y += min_ty * dy + ny * 0.2f;
+
+		if (nx != 0) vx = 0;
+		if (ny != 0) vy = 0;
+
+		//to avoid multi-jump
+		if (JumpFall == true && jumpTemp > vy)
+		{
+			this->SetState(SIMON_STATE_IDLE);
+			isJumping = false;
+			JumpFall = false;
+		}
+		//if (isAttacking())
+		//{
+		//	//int tempx = x + dx, tempy = y + vy;
+
+		//	//rope->SetSimonPosiiton(x, y, nx);
+		//	//if (state == SIMON_STATE_SITDOWN_ATTACK)
+		//	//	rope->SetSimonPosiiton(x, y + SIMON_SITDOWN_HEIGHT_CHANGE, nx);
+		//}
+		// Collision logic with Goombas
+		
+		for (UINT i = 0; i < coEventsResult.size(); i++)
+		{
+			LPCOLLISIONEVENT e = coEventsResult[i];
+
+			if (dynamic_cast<CollectableObject*>(e->obj))
+			{
+				CollectableObject* cObj = dynamic_cast<CollectableObject*>(e->obj);
+				int cObjState = cObj->GetState();
+				
+				switch (cObjState) {
+				case BIGHEART:
+					heart + 5;
+					//DeleteObjects(cObj);
+					break;
+				case ROPEUPGRADE:
+					rope->Upgrade();
+					//DeleteObjects(cObj);
+					state = SIMON_STATE_FLASHING;
+					break;
+				case DANGGER:
+					weaponType = WEAPON_DANGGER;
+					break;
+				}
+				DeleteObjects(cObj);
+			}
+		}
+	}
+
+	// clean up collision events
+	for (UINT i = 0; i < coEvents.size(); i++) delete coEvents[i];
+	for (UINT i = 0; i < coStaticEvents.size(); i++) delete coStaticEvents[i];
 	//if (this->isAttacking())
 	//{
 	//	if (startAttack == false)
@@ -60,120 +273,21 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 	//			animations[SIMON_ANI_ATTACK_LEFT]->Reset();
 	//			animations[SIMON_ANI_ATTACK_RIGHT]->Reset();
 
-	//			if (state == SIMON_STATE_SITDOWN_ATTACK) 
+	//			if (state == SIMON_STATE_SITDOWN_ATTACK)
 	//				if (nx > 0) this->SetState(SIMON_STATE_SITDOWN_RIGHT);
 	//				else this->SetState(SIMON_STATE_SITDOWN_LEFT);
 	//			else this->SetState(SIMON_STATE_IDLE);
 	//		}
 	//	}
 	//	//Update rope position to simon gravity.
-	//	int tempx = x + dx, tempy = y + vy;
+	//	//int tempx = x + dx, tempy = y + vy;
 
-	//	rope->SetSimonPosiiton(tempx, tempy, nx);
+	//	rope->SetSimonPosiiton(x, y, nx);
 	//	if (state == SIMON_STATE_SITDOWN_ATTACK)
 	//		rope->SetSimonPosiiton(x, y + SIMON_SITDOWN_HEIGHT_CHANGE, nx);
 
 	//	rope->Update(dt, coObjects);
 	//}
-
-	// turn off collision when die 
-	if (state != SIMON_STATE_DIE)
-		CalcPotentialCollisions(coObjects, coEvents);
-
-	if (this->vy >= /*0.075*/ 0.1 && isJumping == true)
-		JumpFall = true;
-
-	// reset untouchable timer if untouchable time has passed
-	if (GetTickCount() - untouchable_start > SIMON_UNTOUCHABLE_TIME)
-	{
-		untouchable_start = 0;
-		untouchable = 0;
-	}
-
-	// No collision occured, proceed normally
-	if (coEvents.size() == 0)
-	{
-		x += dx;
-		y += dy;
-	}
-	else
-	{
-		float min_tx, min_ty, nx = 0, ny;
-
-		FilterCollision(coEvents, coEventsResult, min_tx, min_ty, nx, ny);
-
-		// block 
-		x += min_tx * dx + nx * 0.4f;		// nx*0.4f : need to push out a bit to avoid overlapping next frame
-		y += min_ty * dy + ny * 0.4f;
-
-		if (nx != 0) vx = 0;
-		if (ny != 0) vy = 0;
-
-		//to avoid multi-jump
-		if (JumpFall == true && jumpTemp > vy)
-		{
-			this->SetState(SIMON_STATE_IDLE);
-			isJumping = false;
-			JumpFall = false;
-		}
-		if (isAttacking())
-		{
-			//int tempx = x + dx, tempy = y + vy;
-
-			//rope->SetSimonPosiiton(x, y, nx);
-			//if (state == SIMON_STATE_SITDOWN_ATTACK)
-			//	rope->SetSimonPosiiton(x, y + SIMON_SITDOWN_HEIGHT_CHANGE, nx);
-		}
-		// Collision logic with Goombas
-		for (UINT i = 0; i < coEventsResult.size(); i++)
-		{
-			LPCOLLISIONEVENT e = coEventsResult[i];
-		}
-	}
-
-	// clean up collision events
-	for (UINT i = 0; i < coEvents.size(); i++) delete coEvents[i];
-
-	if (this->isAttacking())
-	{
-		if (startAttack == false)
-		{
-			startAttack = true;
-			attackTime += GetTickCount();
-
-		}
-		else
-		{
-			float remain = attackTime - GetTickCount();
-			//DebugOut(L"[INFO] Remain Time: %f\n", remain);
-			//DebugOut(L"[INFO] get tick: %X\n", GetTickCount());
-
-			if (remain <= SIMON_ATTACK_TIME / 3); rope->SetLastFrame();
-			if (remain <= 0 || remain > SIMON_ATTACK_TIME + 10)
-			{
-				rope->reset();
-				Attacking = false;
-				startAttack = false;
-				remain = 0;
-				attackTime = SIMON_ATTACK_TIME;
-				animations[SIMON_ANI_ATTACK_LEFT]->Reset();
-				animations[SIMON_ANI_ATTACK_RIGHT]->Reset();
-
-				if (state == SIMON_STATE_SITDOWN_ATTACK)
-					if (nx > 0) this->SetState(SIMON_STATE_SITDOWN_RIGHT);
-					else this->SetState(SIMON_STATE_SITDOWN_LEFT);
-				else this->SetState(SIMON_STATE_IDLE);
-			}
-		}
-		//Update rope position to simon gravity.
-		//int tempx = x + dx, tempy = y + vy;
-
-		rope->SetSimonPosiiton(x, y, nx);
-		if (state == SIMON_STATE_SITDOWN_ATTACK)
-			rope->SetSimonPosiiton(x, y + SIMON_SITDOWN_HEIGHT_CHANGE, nx);
-
-		rope->Update(dt, coObjects);
-	}
 }
 
 void Simon::Render()
@@ -209,7 +323,12 @@ void Simon::Render()
 			if (nx > 0) ani = SIMON_ANI_ATTACK_RIGHT;
 			else ani = SIMON_ANI_ATTACK_LEFT;
 	}
-	else if (isJumping)
+	else if (state == SIMON_STATE_FLASHING)
+	{
+		if (nx > 0) ani = SIMON_ANI_FLASHING_RIGHT;
+		else ani = SIMON_ANI_FLASHING_LEFT;
+	}
+	else if (isJumping && this->isAttacking()==false)
 	{
 		if (JumpFall)
 			if (nx > 0) ani = SIMON_ANI_IDLE_RIGHT;
@@ -233,13 +352,13 @@ void Simon::Render()
 	int alpha = 255;
 	if (untouchable) alpha = 128;
 	animations[ani]->Render(x, y, alpha);
-	//animations[testAni]->Render(xcam, ycam, alpha);
+	//animations[testAni]->Render(x, y, alpha);
 
 	if (nx > 0) RenderBoundingBox(SIMON_RIGHT_BBOX, 0);
 	else RenderBoundingBox(SIMON_LEFT_BBOX, 0);
 	//RenderBoundingBox();
 
-	if (isAttacking()) rope->Render();
+	if (isAttacking() && isWeapon == false) rope->Render();
 }
 
 void Simon::SetState(int state)
@@ -322,5 +441,35 @@ void Simon::attack()
 	{
 		this->SetState(SIMON_STATE_ATTACK);
 		rope->SetSimonPosiiton(x, y, nx);
+	}
+}
+
+bool Simon::isSitting()
+{
+	if (state == SIMON_STATE_SITDOWN_LEFT ||
+		state == SIMON_STATE_SITDOWN_RIGHT ||
+		state == SIMON_STATE_SITDOWN_ATTACK)
+		return true;
+	return false;
+}
+
+void Simon::setWeapon()
+{
+	isWeapon = true;
+	if (weaponType > -1) this->attack();
+	else isWeapon = false;
+}
+
+
+
+void Simon::DeleteObjects(LPGAMEOBJECT a)
+{
+	for (int i = 0; i < obj->size(); i++)
+	{
+		if (obj->at(i) == a)
+		{
+			obj->erase(obj->begin() + i);
+			return;
+		}
 	}
 }

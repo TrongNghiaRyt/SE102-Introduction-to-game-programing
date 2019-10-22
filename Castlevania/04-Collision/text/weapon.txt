@@ -1,0 +1,3 @@
+Frame_Name	ID	left	top	right	bottom
+Dangger_R	20500	3	34	34	51
+Dangger_L	21500	167	100	198	117

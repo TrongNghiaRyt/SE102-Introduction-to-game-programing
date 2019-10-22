@@ -1,5 +1,8 @@
 #include "Rope.h"
 #include "debug.h"
+#include "Brick.h"
+#include "Wall.h"
+#include "BigCandle.h"
 
 Rope::Rope()
 {
@@ -50,8 +53,6 @@ void Rope::SetSimonPosiiton(float x1, float y1, int nx1)
 			this->SetPosition(x1 - 78, y1);
 		}
 	}
-	
-	DebugOut(L"Rope x = %f, y = %f \n", this->x, this->y);
 }
 
 void Rope::reset()
@@ -72,7 +73,7 @@ void Rope::GetBoundingBox(float& left, float& top, float& right, float& bottom)
 			if (isLeft)
 			{
 				left = x;
-				top = y + 6;
+				top = y + 17;
 				right = x + ROPE_BBOX_WIDTH;
 				bottom = y + 6 + ROPE_BBOX_HEIGHT;
 			}
@@ -89,7 +90,7 @@ void Rope::GetBoundingBox(float& left, float& top, float& right, float& bottom)
 			if (isLeft)
 			{
 				left = x;
-				top = y + 6;
+				top = y + 17;
 				right = x + ROPE_MAX_BBOX_WIDTH;
 				bottom = y + 6 + ROPE_MAX_BBOX_HEIGHT;
 			}
@@ -101,12 +102,64 @@ void Rope::GetBoundingBox(float& left, float& top, float& right, float& bottom)
 				bottom = y + ROPE_Y_BBOX_SIMON + ROPE_MAX_BBOX_HEIGHT;
 			}
 		}
+		//DebugOut(L"left = %d, top = %d, right = %d, bottom = %d\n");
 	}
 	else left = top = right = bottom = 0;
+
+
 }
 
 void Rope::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 {
+	/*DebugOut(L"rope y = %f\n", this->y);*/
+
+	vector<LPCOLLISIONEVENT> coEvents;
+	vector<LPCOLLISIONEVENT> coEventsResult;
+
+	coEvents.clear();
+
+	vector<LPGAMEOBJECT> temp;
+	if (isLastFrame)
+	{
+		for (int i = 0; i < coObjects->size(); i++)
+		{
+			if (!dynamic_cast<CBrick*>((*coObjects)[i]) ||
+				!dynamic_cast<Wall*>((*coObjects)[i])	||
+				!dynamic_cast<CollectableObject*>((*coObjects)[i]))
+				temp.push_back((*coObjects)[i]);
+		}
+
+		CalcPotentialStaticCollisions(&temp, coEvents);
+	}
+	if (coEvents.size() != 0)
+	{
+		float min_tx, min_ty, nx = 0, ny;
+
+		FilterCollision(coEvents, coEventsResult, min_tx, min_ty, nx, ny);
+
+		// Collision logic with BigCandle
+
+		for (UINT i = 0; i < coEventsResult.size(); i = i +2)
+		{
+			LPCOLLISIONEVENT e = coEventsResult[i];
+
+			if (dynamic_cast<BigCandle*>(e->obj))
+			{
+				BigCandle* bigCandle = dynamic_cast<BigCandle*>(e->obj);
+
+
+				bigCandle->getObject(obj);
+				bigCandle->Hit();
+				DeleteObjects(bigCandle, obj);
+				DebugOut(L"HIT!\n");
+
+				DeleteObjects(bigCandle, obj);
+			}
+
+		}
+
+	}
+	for (UINT i = 0; i < coEvents.size(); i++) delete coEvents[i];
 }
 
 void Rope::Render()
@@ -116,4 +169,18 @@ void Rope::Render()
 	if (isLeft) ani = 1;
 
 	animations[ani + 2 * currentRope]->Render(x, y);
+	if (isLeft) RenderBoundingBox(0, 17);
+	else RenderBoundingBox(75,17);
+}
+
+void Rope::DeleteObjects(LPGAMEOBJECT a, vector<LPGAMEOBJECT>* objects)
+{
+	for (int i = 0; i < objects->size(); i++)
+	{
+		if (objects->at(i) == a)
+		{
+			objects->erase(objects->begin() + i);
+			return;
+		}
+	}
 }

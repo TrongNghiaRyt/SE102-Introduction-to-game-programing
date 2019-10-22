@@ -1,0 +1,4 @@
+Animation_Name	sID	aniID	Time
+Dangger		20500	2050	100
+Dangger_L	21500	2150	100
+eff		0	0	0

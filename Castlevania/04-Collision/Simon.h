@@ -3,11 +3,13 @@
 #include "Textures.h"
 #include "Brick.h"
 #include "Rope.h"
+#include "CollectableObject.h"
+
 #define PATH_SIMON_ANI		L"text\\simon_ani.txt"
 #define PATH_SIMON_SPRITE	L"text\\simon.txt"
 #define ID_TEX_SIMON			100
 
-#define SIMON_WALKING_SPEED		0.1f 
+#define SIMON_WALKING_SPEED		0.125f 
 //0.1f
 #define SIMON_JUMP_SPEED_Y			0.425f
 #define SIMON_JUMP_DEFLECT_SPEED	0.2f
@@ -22,6 +24,7 @@
 #define SIMON_STATE_ATTACK			30
 #define SIMON_STATE_SITDOWN_ATTACK	35
 #define SIMON_STATE_JUMP			40
+#define SIMON_STATE_FLASHING		45
 #define SIMON_STATE_DIE				-1
 
 #define SIMON_ANI_STAND					0
@@ -37,6 +40,8 @@
 #define SIMON_ANI_SIT_ATTACK_LEFT		10
 #define SIMON_ANI_JUMP_RIGHT			11
 #define SIMON_ANI_JUMP_LEFT				12
+#define SIMON_ANI_FLASHING_RIGHT		13
+#define SIMON_ANI_FLASHING_LEFT			14
 
 
 #define SIMON_BBOX_WIDTH  32
@@ -45,7 +50,8 @@
 #define SIMON_LEFT_BBOX	12
 
 #define SIMON_UNTOUCHABLE_TIME 3000
-#define SIMON_ATTACK_TIME	600
+#define SIMON_ATTACK_TIME	360
+#define SIMON_FLASHING_TIME	600
 #define SIMON_SITDOWN_HEIGHT_CHANGE 14
 
 class Simon : public CGameObject
@@ -63,7 +69,12 @@ class Simon : public CGameObject
 	bool JumpFall = false;
 
 	Rope* rope;
+	//Weapon* weapon = new Weapon();
+	bool isWeapon = false;
+	int weaponType = -1;
+	vector<LPGAMEOBJECT>* obj;
 
+	int heart = 5;
 public:
 	Simon();
 	~Simon();
@@ -81,11 +92,19 @@ public:
 	}
 
 	bool IsJumping() { return isJumping; }
+	void getObjects(vector<LPGAMEOBJECT>* a) { obj = a; }
 
+	//Flashing
+	bool startFlashing = false;
+	DWORD FlashingTime = SIMON_FLASHING_TIME;
 
 	//simon attack
 	void attack();
 	//void weaponAttack() { isWeapon = true; }
 	bool isAttacking() { return Attacking; }
+	bool isSitting();
+	void setWeapon();
+
+	void DeleteObjects(LPGAMEOBJECT a);
 };
 

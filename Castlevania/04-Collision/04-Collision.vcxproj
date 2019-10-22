@@ -124,7 +124,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Background.h" />
+    <ClInclude Include="BigCandle.h" />
     <ClInclude Include="Brick.h" />
+    <ClInclude Include="CollectableObject.h" />
     <ClInclude Include="debug.h" />
     <ClInclude Include="Font.h" />
     <ClInclude Include="Game.h" />
@@ -137,10 +139,13 @@
     <ClInclude Include="Sprites.h" />
     <ClInclude Include="Textures.h" />
     <ClInclude Include="Wall.h" />
+    <ClInclude Include="Weapon.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Background.cpp" />
+    <ClCompile Include="BigCandle.cpp" />
     <ClCompile Include="Brick.cpp" />
+    <ClCompile Include="CollectableObject.cpp" />
     <ClCompile Include="debug.cpp" />
     <ClCompile Include="Font.cpp" />
     <ClCompile Include="Game.cpp" />
@@ -154,6 +159,7 @@
     <ClCompile Include="Sprites.cpp" />
     <ClCompile Include="Textures.cpp" />
     <ClCompile Include="Wall.cpp" />
+    <ClCompile Include="Weapon.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

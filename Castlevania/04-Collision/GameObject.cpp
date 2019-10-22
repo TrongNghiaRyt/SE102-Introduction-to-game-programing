@@ -56,6 +56,22 @@ LPCOLLISIONEVENT CGameObject::SweptAABBEx(LPGAMEOBJECT coO)
 	return e;
 }
 
+LPCOLLISIONEVENT CGameObject::AABBEx(LPGAMEOBJECT coO)
+{
+	float sl, st, sr, sb;
+	float ml, mt, mr, mb;
+	float t, nx, ny;
+
+	coO->GetBoundingBox(sl, st, sr, sb);
+
+	GetBoundingBox(ml, mt, mr, mb);
+
+	CGame::AABB(ml, mt, mr, mb, sl, st, sr, sb, t, nx, ny);
+
+	CCollisionEvent* e = new CCollisionEvent(t, nx, ny, coO);
+	return e;
+}
+
 /*
 	Calculate potential collisions with the list of colliable objects 
 	
@@ -69,6 +85,30 @@ void CGameObject::CalcPotentialCollisions(
 	for (UINT i = 0; i < coObjects->size(); i++)
 	{
 		LPCOLLISIONEVENT e = SweptAABBEx(coObjects->at(i));
+
+		if (e->t > 0 && e->t <= 1.0f)
+			coEvents.push_back(e);
+		else
+			delete e;
+	}
+
+	std::sort(coEvents.begin(), coEvents.end(), CCollisionEvent::compare);
+}
+
+void CGameObject::CalcPotentialStaticCollisions(vector<LPGAMEOBJECT>* coObjects, vector<LPCOLLISIONEVENT>& coEvents)
+{
+	for (UINT i = 0; i < coObjects->size(); i++)
+	{
+		LPCOLLISIONEVENT e;// = SweptAABBEx(coObjects->at(i));
+
+		//deal with both static objects.
+		float a, b;
+		coObjects->at(i)->GetSpeed(a, b);
+
+		if (this->dx == 0 && this->dy == 0 && a == 0 && b == 0)
+			e = AABBEx(coObjects->at(i));
+		else
+			e = SweptAABBEx(coObjects->at(i));
 
 		if (e->t > 0 && e->t <= 1.0f)
 			coEvents.push_back(e);
@@ -145,7 +185,7 @@ void CGameObject::RenderBoundingBox(float x1, float y1)
 	rect.right = (int)r - (int)l;
 	rect.bottom = (int)b - (int)t;
 
-	CGame::GetInstance()->Draw(x + x1, y + y1, bbox, rect.left, rect.top, rect.right, rect.bottom, 32);
+	CGame::GetInstance()->Draw(x + x1, y + y1, bbox, rect.left, rect.top, rect.right, rect.bottom, 64);
 }
 
 void CGameObject::AddAnimation(int aniId)
