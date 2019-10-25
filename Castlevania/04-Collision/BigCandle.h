@@ -30,7 +30,7 @@ public:
 
 	~BigCandle();
 
-	virtual void Render() { animations[0]->Render(x, y, 255); RenderBoundingBox(); }
+	virtual void Render() { animations[0]->Render(x, y); RenderBoundingBox(); }
 	virtual void Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects = NULL);
 	virtual void GetBoundingBox(float& l, float& t, float& r, float& b);
 

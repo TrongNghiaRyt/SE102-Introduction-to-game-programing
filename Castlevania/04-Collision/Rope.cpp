@@ -151,7 +151,6 @@ void Rope::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 				bigCandle->getObject(obj);
 				bigCandle->Hit();
 				DeleteObjects(bigCandle, obj);
-				DebugOut(L"HIT!\n");
 
 				DeleteObjects(bigCandle, obj);
 			}
@@ -171,6 +170,8 @@ void Rope::Render()
 	animations[ani + 2 * currentRope]->Render(x, y);
 	if (isLeft) RenderBoundingBox(0, 17);
 	else RenderBoundingBox(75,17);
+
+	//DebugOut(L"Current rope: %d\n", &currentRope);
 }
 
 void Rope::DeleteObjects(LPGAMEOBJECT a, vector<LPGAMEOBJECT>* objects)

@@ -2,6 +2,7 @@
 #include "debug.h"
 #include "BigCandle.h"
 #include "Weapon.h"
+#include "Wall.h"
 
 Simon::Simon() : CGameObject()
 {
@@ -38,8 +39,11 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 	vector<LPCOLLISIONEVENT> coStaticEvents;
 	vector<LPCOLLISIONEVENT> coStaticEventsResult;
 
+	vector<LPGAMEOBJECT> collisionObjects;
+
 	coEvents.clear();
 	coStaticEvents.clear();
+	collisionObjects.clear();
 
 	if (state == SIMON_STATE_FLASHING)
 	{
@@ -95,7 +99,7 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 				if (isWeapon) {
 					Weapon* weapon = new Weapon();
 					weapon->SetState(weaponType);
-					weapon->SetPosition(this->x, this->y);
+					weapon->SetPosition(this->x, this->y + 10);
 					weapon->getObjects(obj);
 					weapon->setNx(this->nx);
 					obj->push_back(weapon);
@@ -119,22 +123,14 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 	// turn off collision when die 
 	if (state != SIMON_STATE_DIE)
 	{
-		//Add objects that can be conllision with simon.
-		vector<LPGAMEOBJECT> temp;
-		for (int i = 0; i < coObjects->size(); i++)
-			if (!dynamic_cast<BigCandle*>((*coObjects)[i]))
-				temp.push_back((*coObjects)[i]);
-
 		//Static objs
-		//vector<LPGAMEOBJECT> tempStatic;
-		//for (int i = 0; i < coObjects->size(); i++)
-		//	//if (dynamic_cast<CollectableObject*>((*coObjects)[i]))
-		//	if (!dynamic_cast<BigCandle*>((*coObjects)[i]))
-		//		tempStatic.push_back((*coObjects)[i]);
+		vector<LPGAMEOBJECT> tempStatic;
+		for (int i = 0; i < coObjects->size(); i++)
+			//if (dynamic_cast<CollectableObject*>((*coObjects)[i]))
+			if (!dynamic_cast<BigCandle*>((*coObjects)[i]))
+				tempStatic.push_back((*coObjects)[i]);
 
-
-		CalcPotentialCollisions(&temp, coEvents);
-		//CalcPotentialStaticCollisions(&tempStatic, coStaticEvents);
+		CalcPotentialStaticCollisions(&tempStatic, coStaticEvents);
 	}
 
 
@@ -149,7 +145,7 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 	}
 
 	//Calc static objs first
-	/*if (coStaticEvents.size() != 0)
+	if (coStaticEvents.size() != 0)
 	{
 		float min_tx, min_ty, nx = 0, ny;
 
@@ -170,17 +166,32 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 					DeleteObjects(cObj);
 					break;
 				case ROPEUPGRADE:
-					rope->Upgrade();
+					//rope->Upgrade();
 					this->SetState(SIMON_STATE_FLASHING);
 					DeleteObjects(cObj);
 					state = SIMON_STATE_FLASHING;
 					break;
+				case DANGGER:
+					weaponType = WEAPON_DANGGER;
+					break;
 				}
-				DeleteObjects(cObj);
+				//DeleteObjects(cObj);
 			}
 		}
-	}*/
+	}
+	for (UINT i = 0; i < coStaticEvents.size(); i++) delete coStaticEvents[i];
 
+
+	if (state != SIMON_STATE_DIE)
+	{
+		//Add objects that can be conllision with simon.
+		vector<LPGAMEOBJECT> temp;
+		for (int i = 0; i < coObjects->size(); i++)
+			if (!dynamic_cast<BigCandle*>((*coObjects)[i]))
+				temp.push_back((*coObjects)[i]);
+
+		CalcPotentialCollisions(&temp, coEvents);
+	}
 	// No collision occured, proceed normally
 	if (coEvents.size() == 0)
 	{
@@ -247,7 +258,6 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 
 	// clean up collision events
 	for (UINT i = 0; i < coEvents.size(); i++) delete coEvents[i];
-	for (UINT i = 0; i < coStaticEvents.size(); i++) delete coStaticEvents[i];
 	//if (this->isAttacking())
 	//{
 	//	if (startAttack == false)

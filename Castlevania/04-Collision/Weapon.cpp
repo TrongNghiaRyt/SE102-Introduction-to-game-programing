@@ -24,29 +24,25 @@ void Weapon::GetBoundingBox(float& left, float& top, float& right, float& bottom
 	{
 	case WEAPON_DANGGER:
 		right = x + 32;
-		bottom = y + 18;
+		bottom = y + 32;
 	}
 }
 
 void Weapon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 {
-	CGameObject::Update(dt, coObjects);
+	// Calculate dx, dy 
+	CGameObject::Update(dt);
 
 	switch (state)
 	{
 	case WEAPON_DANGGER:
-		if (nx > 0) 
-			vx = DANGGER_SPEED;
-		else 
-			vx = DANGGER_SPEED;
-		vx = DANGGER_SPEED;
-		vy += 0;
-		x += vx * dt * nx;
-		y += dy;
-		DebugOut(L"Nx = %d\n", this->nx);
-		DebugOut(L"vx = %f\n", vx * dt * nx);
-		break;
-		
+		//vx = DANGGER_SPEED;
+		//vy = 0;
+		//x += vx * dt * nx;
+		//y += dy;
+		vx = DANGGER_SPEED * dt * nx;
+		vy = 0;
+		break;	
 	}
 	vector<LPCOLLISIONEVENT> coEvents;
 	vector<LPCOLLISIONEVENT> coEventsResult;
@@ -62,8 +58,8 @@ void Weapon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 
 	if (coEvents.size() == 0)
 	{
-		//x += dx;
-		//y += dy;
+		x += dx;
+		y += dy;
 	}
 	else
 	{
@@ -102,6 +98,7 @@ void Weapon::Render()
 	}
 
 	animations[ani]->Render(x, y);
+	RenderBoundingBox();
 }
 
 void Weapon::DeleteObjects(LPGAMEOBJECT a)

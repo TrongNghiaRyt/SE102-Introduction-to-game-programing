@@ -66,9 +66,11 @@ public:
 
 	LPCOLLISIONEVENT SweptAABBEx(LPGAMEOBJECT coO);
 	LPCOLLISIONEVENT AABBEx(LPGAMEOBJECT coO);
+	bool isCollision(LPGAMEOBJECT coO);
 
 	void CalcPotentialCollisions(vector<LPGAMEOBJECT> *coObjects, vector<LPCOLLISIONEVENT> &coEvents);
 	void CalcPotentialStaticCollisions(vector<LPGAMEOBJECT>* coObjects, vector<LPCOLLISIONEVENT>& coEvents);
+	void CalcStaticAABB(vector<LPGAMEOBJECT>* coObjects, vector<LPGAMEOBJECT>* collisionObjects);
 
 	void FilterCollision(
 		vector<LPCOLLISIONEVENT> &coEvents, 

@@ -1,7 +1,7 @@
 #pragma once
 #include "GameObject.h"
 
-#define DANGGER_SPEED	0.15f
+#define DANGGER_SPEED	0.015f
 
 
 #define WEAPON_DANGGER 0
@@ -29,7 +29,6 @@ public:
 
 	void getObjects(vector<LPGAMEOBJECT>* a) { obj = a; }
 	void DeleteObjects(LPGAMEOBJECT a);
-	void setNx(int x) { 
-		this->nx = x; }
+	void setNx(int x) { this->nx = x; }
 };
 

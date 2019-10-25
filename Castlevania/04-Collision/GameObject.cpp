@@ -72,6 +72,23 @@ LPCOLLISIONEVENT CGameObject::AABBEx(LPGAMEOBJECT coO)
 	return e;
 }
 
+bool CGameObject::isCollision(LPGAMEOBJECT coO)
+{
+	float sl, st, sr, sb;
+	float ml, mt, mr, mb;
+
+	coO->GetBoundingBox(sl, st, sr, sb);
+	GetBoundingBox(ml, mt, mr, mb);
+
+	float left = sl - mr;
+	float top = st - mb;
+	float right = sr - ml;
+	float bottom = sb - mt;
+
+	if (left <= 0 && top <= 0 && right >= 0 && bottom >= 0) return true;
+	return false;
+}
+
 /*
 	Calculate potential collisions with the list of colliable objects 
 	
@@ -117,6 +134,15 @@ void CGameObject::CalcPotentialStaticCollisions(vector<LPGAMEOBJECT>* coObjects,
 	}
 
 	std::sort(coEvents.begin(), coEvents.end(), CCollisionEvent::compare);
+}
+
+void CGameObject::CalcStaticAABB(vector<LPGAMEOBJECT>* coObjects, vector<LPGAMEOBJECT>* collisionObjects)
+{
+	for (int i = 0; i < coObjects->size(); i++) 
+	{
+		if (this->isCollision(coObjects->at(i)))
+			collisionObjects->push_back(coObjects->at(i));
+	}
 }
 
 void CGameObject::FilterCollision(
