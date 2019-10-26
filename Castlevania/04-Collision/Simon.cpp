@@ -36,14 +36,8 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 	vector<LPCOLLISIONEVENT> coEvents;
 	vector<LPCOLLISIONEVENT> coEventsResult;
 
-	vector<LPCOLLISIONEVENT> coStaticEvents;
-	vector<LPCOLLISIONEVENT> coStaticEventsResult;
-
-	vector<LPGAMEOBJECT> collisionObjects;
-
 	coEvents.clear();
-	coStaticEvents.clear();
-	collisionObjects.clear();
+
 
 	if (state == SIMON_STATE_FLASHING)
 	{
@@ -79,7 +73,7 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 			//DebugOut(L"[INFO] Remain Time: %f\n", remain);
 			//DebugOut(L"[INFO] get tick: %X\n", GetTickCount());
 
-			if (remain <= SIMON_ATTACK_TIME / 3) rope->SetLastFrame();
+			if (remain <= SIMON_ATTACK_TIME / 3 - SIMON_ATTACK_TIME / 6) rope->SetLastFrame();
 			if (remain <= 0 || remain > SIMON_ATTACK_TIME + 10)
 			{
 				rope->reset();
@@ -112,27 +106,13 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 		//int tempx = x + dx, tempy = y + vy;
 		if (!isWeapon)
 		{
-			rope->SetSimonPosiiton(x, y, nx);
+			rope->SetSimonPosiiton(x + dx, y + dy, nx);
 			if (state == SIMON_STATE_SITDOWN_ATTACK)
-				rope->SetSimonPosiiton(x, y + SIMON_SITDOWN_HEIGHT_CHANGE, nx);
+				rope->SetSimonPosiiton(x + dx, y + dy + SIMON_SITDOWN_HEIGHT_CHANGE, nx);
 			rope->getObjects(obj);
 			rope->Update(dt, coObjects);
 		}
 	}
-
-	// turn off collision when die 
-	if (state != SIMON_STATE_DIE)
-	{
-		//Static objs
-		vector<LPGAMEOBJECT> tempStatic;
-		for (int i = 0; i < coObjects->size(); i++)
-			//if (dynamic_cast<CollectableObject*>((*coObjects)[i]))
-			if (!dynamic_cast<BigCandle*>((*coObjects)[i]))
-				tempStatic.push_back((*coObjects)[i]);
-
-		CalcPotentialStaticCollisions(&tempStatic, coStaticEvents);
-	}
-
 
 	if (this->vy >= /*0.075*/ 0.1 && isJumping == true)
 		JumpFall = true;
@@ -143,43 +123,6 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 		untouchable_start = 0;
 		untouchable = 0;
 	}
-
-	//Calc static objs first
-	if (coStaticEvents.size() != 0)
-	{
-		float min_tx, min_ty, nx = 0, ny;
-
-		FilterCollision(coStaticEvents, coStaticEventsResult, min_tx, min_ty, nx, ny);
-
-		for (UINT i = 0; i < coStaticEventsResult.size(); i++)
-		{
-			LPCOLLISIONEVENT e = coStaticEventsResult[i];
-
-			if (dynamic_cast<CollectableObject*>(e->obj))
-			{
-				CollectableObject* cObj = dynamic_cast<CollectableObject*>(e->obj);
-				int cObjState = cObj->GetState();
-
-				switch (cObjState) {
-				case BIGHEART:
-					heart + 5;
-					DeleteObjects(cObj);
-					break;
-				case ROPEUPGRADE:
-					//rope->Upgrade();
-					this->SetState(SIMON_STATE_FLASHING);
-					DeleteObjects(cObj);
-					state = SIMON_STATE_FLASHING;
-					break;
-				case DANGGER:
-					weaponType = WEAPON_DANGGER;
-					break;
-				}
-				//DeleteObjects(cObj);
-			}
-		}
-	}
-	for (UINT i = 0; i < coStaticEvents.size(); i++) delete coStaticEvents[i];
 
 
 	if (state != SIMON_STATE_DIE)
@@ -258,46 +201,33 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 
 	// clean up collision events
 	for (UINT i = 0; i < coEvents.size(); i++) delete coEvents[i];
-	//if (this->isAttacking())
-	//{
-	//	if (startAttack == false)
-	//	{
-	//		startAttack = true;
-	//		attackTime += GetTickCount();
 
-	//	}
-	//	else
-	//	{
-	//		float remain = attackTime - GetTickCount();
-	//		//DebugOut(L"[INFO] Remain Time: %f\n", remain);
-	//		//DebugOut(L"[INFO] get tick: %X\n", GetTickCount());
+	for (UINT i = 0; i < coObjects->size(); i++)
+	{
+		if (isCollision(coObjects->at(i)))
+		{
+			if (dynamic_cast<CollectableObject*>((*coObjects)[i]))
+			{
+				CollectableObject* cObj = dynamic_cast<CollectableObject*>(coObjects->at(i));
+				int cObjState = cObj->GetState();
 
-	//		if (remain <= SIMON_ATTACK_TIME / 3); rope->SetLastFrame();
-	//		if (remain <= 0 || remain > SIMON_ATTACK_TIME + 10)
-	//		{
-	//			rope->reset();
-	//			Attacking = false;
-	//			startAttack = false;
-	//			remain = 0;
-	//			attackTime = SIMON_ATTACK_TIME;
-	//			animations[SIMON_ANI_ATTACK_LEFT]->Reset();
-	//			animations[SIMON_ANI_ATTACK_RIGHT]->Reset();
-
-	//			if (state == SIMON_STATE_SITDOWN_ATTACK)
-	//				if (nx > 0) this->SetState(SIMON_STATE_SITDOWN_RIGHT);
-	//				else this->SetState(SIMON_STATE_SITDOWN_LEFT);
-	//			else this->SetState(SIMON_STATE_IDLE);
-	//		}
-	//	}
-	//	//Update rope position to simon gravity.
-	//	//int tempx = x + dx, tempy = y + vy;
-
-	//	rope->SetSimonPosiiton(x, y, nx);
-	//	if (state == SIMON_STATE_SITDOWN_ATTACK)
-	//		rope->SetSimonPosiiton(x, y + SIMON_SITDOWN_HEIGHT_CHANGE, nx);
-
-	//	rope->Update(dt, coObjects);
-	//}
+				switch (cObjState) {
+				case BIGHEART:
+					heart + 5;
+					break;
+				case ROPEUPGRADE:
+					rope->Upgrade();
+					this->SetState(SIMON_STATE_FLASHING);
+					state = SIMON_STATE_FLASHING;
+					break;
+				case DANGGER:
+					weaponType = WEAPON_DANGGER;
+					break;
+				}
+				DeleteObjects(cObj);
+			}
+		}
+	}
 }
 
 void Simon::Render()
@@ -324,7 +254,7 @@ void Simon::Render()
 		ani = SIMON_ANI_SITDOWN_RIGHT;
 	else if (state == SIMON_STATE_SITDOWN_LEFT)
 		ani = SIMON_ANI_SITDOWN_LEFT;
-	else if (this->isAttacking())
+	else if (this->isAttacking() && state != SIMON_STATE_FLASHING)
 	{
 		if (state == SIMON_STATE_SITDOWN_ATTACK)
 			if (nx > 0) ani = SIMON_ANI_SIT_ATTACK_RIGHT;
@@ -409,6 +339,8 @@ void Simon::SetState(int state)
 	case SIMON_STATE_DIE:
 		vy = -SIMON_DIE_DEFLECT_SPEED;
 		break;
+	case SIMON_STATE_FLASHING:
+		Attacking = false;
 	}
 }
 
@@ -423,9 +355,9 @@ void Simon::GetBoundingBox(float& left, float& top, float& right, float& bottom)
 	}
 	else
 	{
-		left = x;
+		left = x + SIMON_RIGHT_BBOX;
 		top = y;
-		right = x + SIMON_BBOX_WIDTH;
+		right = x + SIMON_RIGHT_BBOX + SIMON_BBOX_WIDTH;
 		bottom = y + SIMON_BBOX_HEIGHT;
 	}
 }
