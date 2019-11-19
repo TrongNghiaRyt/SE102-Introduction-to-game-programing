@@ -16,6 +16,8 @@ BigCandle::BigCandle()
 
 	srand(time(NULL));
 	items = 1;
+
+	state = CANDLE_STATE_BIG;
 }
 
 BigCandle::BigCandle(int x)
@@ -43,8 +45,17 @@ void BigCandle::GetBoundingBox(float& l, float& t, float& r, float& b)
 {
 	l = x;
 	t = y;
-	r = x + BIGCANDLE_BBOX_WIDTH;
-	b = y + BIGCANDLE_BBOX_HEIGHT;
+	if (state == CANDLE_STATE_BIG)
+	{
+		r = x + BIGCANDLE_BBOX_WIDTH;
+		b = y + BIGCANDLE_BBOX_HEIGHT;
+	}
+	else
+	{
+		r = x + SMALLCANDLE_BBOX_WIDTH;
+		b = y + SMALLCANDLE_BBOX_HEIGHT;
+	}
+
 }
 
 void BigCandle::Hit()

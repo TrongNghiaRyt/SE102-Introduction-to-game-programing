@@ -3,6 +3,9 @@
 #include "BigCandle.h"
 #include "Weapon.h"
 #include "Wall.h"
+#include "HiddenObject.h"
+#include "Door.h"
+
 
 Simon::Simon() : CGameObject()
 {
@@ -114,7 +117,7 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 		}
 	}
 
-	if (this->vy >= /*0.075*/ 0.1 && isJumping == true)
+	if (this->vy >= /*0.075*/ 0.075 && isJumping == true)
 		JumpFall = true;
 
 	// reset untouchable timer if untouchable time has passed
@@ -135,6 +138,34 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 
 		CalcPotentialCollisions(&temp, coEvents);
 	}
+
+	for (UINT i = 0; i < coObjects->size(); i++)
+	{
+		if (isCollision(coObjects->at(i)))
+		{
+			if (dynamic_cast<CollectableObject*>((*coObjects)[i]))
+			{
+				CollectableObject* cObj = dynamic_cast<CollectableObject*>(coObjects->at(i));
+				int cObjState = cObj->GetState();
+
+				switch (cObjState) {
+				case BIGHEART:
+					hearts += 5;
+					break;
+				case ROPEUPGRADE:
+					rope->Upgrade();
+					this->SetState(SIMON_STATE_FLASHING);
+					state = SIMON_STATE_FLASHING;
+					break;
+				case DANGGER:
+					weaponType = WEAPON_DANGGER;
+					break;
+				}
+				DeleteObjects(cObj);
+			}
+		}
+	}
+
 	// No collision occured, proceed normally
 	if (coEvents.size() == 0)
 	{
@@ -148,14 +179,14 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 		FilterCollision(coEvents, coEventsResult, min_tx, min_ty, nx, ny);
 
 		// block 
-		x += min_tx * dx + nx * 0.2f;		// nx*0.4f : need to push out a bit to avoid overlapping next frame
-		y += min_ty * dy + ny * 0.2f;
+		//x += min_tx * dx + nx * 0.2f;		// nx*0.4f : need to push out a bit to avoid overlapping next frame
+		//y += min_ty * dy + ny * 0.2f;
 
-		if (nx != 0) vx = 0;
-		if (ny != 0) vy = 0;
+		//if (nx != 0) vx = 0;
+		//if (ny != 0) vy = 0;
 
 		//to avoid multi-jump
-		if (JumpFall == true && jumpTemp > vy)
+		if (JumpFall == true && jumpTemp > vy && state!=SIMON_STATE_AUTOWALK)
 		{
 			this->SetState(SIMON_STATE_IDLE);
 			isJumping = false;
@@ -179,10 +210,10 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 			{
 				CollectableObject* cObj = dynamic_cast<CollectableObject*>(e->obj);
 				int cObjState = cObj->GetState();
-				
+
 				switch (cObjState) {
 				case BIGHEART:
-					heart + 5;
+					hearts += 5;
 					//DeleteObjects(cObj);
 					break;
 				case ROPEUPGRADE:
@@ -196,13 +227,51 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 				}
 				DeleteObjects(cObj);
 			}
+
+			if (dynamic_cast<Wall*>(e->obj))
+			{
+				x += min_tx * dx + nx * 0.2f;		// nx*0.4f : need to push out a bit to avoid overlapping next frame
+				y += min_ty * dy + ny * 0.2f;
+
+				if (nx != 0) vx = 0;
+				if (ny != 0) vy = 0;
+
+				if (JumpFall == true && jumpTemp > vy && state != SIMON_STATE_AUTOWALK)
+				{
+					this->SetState(SIMON_STATE_IDLE);
+					isJumping = false;
+					JumpFall = false;
+				}
+			}
+
+			if (dynamic_cast<HiddenObject*>(e->obj))
+			{
+				HiddenObject* cObj = dynamic_cast<HiddenObject*>(e->obj);
+				DeleteObjects(cObj);
+				nx = 1;
+				vx = SIMON_WALKING_SPEED / 3;
+
+				this->SetState(SIMON_STATE_AUTOWALK);
+				
+				x += dx;		// nx*0.4f : need to push out a bit to avoid overlapping next frame
+				y += min_ty * dy + ny * 0.2f;
+
+				if (nx != 0) vx = SIMON_WALKING_SPEED / 3;
+				if (ny != 0) vy = 0;
+
+
+				Door* door = new Door();
+				door->SetPosition(16 + 32 * 5 + 4 * 64 * 4 + 64 + 64 + 32 + 16 + 32, 64+16+4);
+				obj->push_back(door);
+			}
 		}
+
 	}
 
 	// clean up collision events
 	for (UINT i = 0; i < coEvents.size(); i++) delete coEvents[i];
 
-	for (UINT i = 0; i < coObjects->size(); i++)
+	/*for (UINT i = 0; i < coObjects->size(); i++)
 	{
 		if (isCollision(coObjects->at(i)))
 		{
@@ -213,7 +282,7 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 
 				switch (cObjState) {
 				case BIGHEART:
-					heart + 5;
+					hearts += 5;
 					break;
 				case ROPEUPGRADE:
 					rope->Upgrade();
@@ -226,8 +295,21 @@ void Simon::Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects)
 				}
 				DeleteObjects(cObj);
 			}
+			if (dynamic_cast<HiddenObject*>((*coObjects)[i]))
+			{
+				HiddenObject* cObj = dynamic_cast<HiddenObject*>((*coObjects)[i]);
+				int cObjState = cObj->GetState();
+
+				switch (state)
+				{
+				case OBJECT_STATE_AUTOWALK:
+					this->SetState(SIMON_STATE_AUTOWALK);
+					break;
+				}
+			}
 		}
-	}
+	}*/
+	DebugOut(L"state = %d\n",state);
 }
 
 void Simon::Render()
@@ -235,6 +317,12 @@ void Simon::Render()
 	int ani;
 	if (state == SIMON_STATE_DIE)
 		ani = SIMON_ANI_IDLE_RIGHT;
+	else if (state == SIMON_STATE_AUTOWALK)
+	{
+		ani = SIMON_ANI_WALKING_RIGHT;
+		vx = SIMON_WALKING_SPEED / 3;
+	}
+
 	//else if (this->isAttacking())
 	//{
 	//	if (state == SIMON_STATE_SIT_ATTACK)
@@ -307,6 +395,10 @@ void Simon::SetState(int state)
 
 	switch (state)
 	{
+	case SIMON_STATE_AUTOWALK:
+		nx = 1;
+		vx = SIMON_WALKING_SPEED / 3;
+		break;
 	case SIMON_STATE_WALKING_RIGHT:
 		vx = SIMON_WALKING_SPEED;
 		nx = 1;
@@ -346,7 +438,14 @@ void Simon::SetState(int state)
 
 void Simon::GetBoundingBox(float& left, float& top, float& right, float& bottom)
 {
-	if (nx > 0)
+	if (IsJumping() == true && JumpFall == false)
+	{
+		left = x + SIMON_RIGHT_BBOX;
+		top = y;
+		right = x + SIMON_RIGHT_BBOX + SIMON_BBOX_WIDTH;
+		bottom = y + SIMON_BBOX_SIT_HEIGHT;
+	}
+	else if (nx > 0)
 	{
 		left = x + SIMON_RIGHT_BBOX;
 		top = y;

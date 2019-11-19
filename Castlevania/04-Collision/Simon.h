@@ -9,7 +9,7 @@
 #define PATH_SIMON_SPRITE	L"text\\simon.txt"
 #define ID_TEX_SIMON			100
 
-#define SIMON_WALKING_SPEED		0.125f 
+#define SIMON_WALKING_SPEED		0.1275f 
 //0.1f
 #define SIMON_JUMP_SPEED_Y			0.425f
 #define SIMON_JUMP_DEFLECT_SPEED	0.2f
@@ -17,6 +17,7 @@
 #define SIMON_DIE_DEFLECT_SPEED		0.5f
 
 #define SIMON_STATE_IDLE			0
+#define SIMON_STATE_AUTOWALK		5
 #define SIMON_STATE_WALKING_RIGHT	10
 #define SIMON_STATE_WALKING_LEFT	11
 #define SIMON_STATE_SITDOWN_RIGHT	20
@@ -46,6 +47,7 @@
 
 #define SIMON_BBOX_WIDTH  32
 #define SIMON_BBOX_HEIGHT 64
+#define SIMON_BBOX_SIT_HEIGHT	46
 #define SIMON_RIGHT_BBOX	18
 #define SIMON_LEFT_BBOX	12
 
@@ -74,7 +76,7 @@ class Simon : public CGameObject
 	int weaponType = -1;
 	vector<LPGAMEOBJECT>* obj;
 
-	int heart = 5;
+	int hearts = 5;
 public:
 	Simon();
 	~Simon();

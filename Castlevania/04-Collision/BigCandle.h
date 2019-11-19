@@ -16,6 +16,12 @@
 
 #define BIGCANDLE_BBOX_WIDTH 32
 #define BIGCANDLE_BBOX_HEIGHT	64
+#define SMALLCANDLE_BBOX_WIDTH	16
+#define SMALLCANDLE_BBOX_HEIGHT	32
+
+#define CANDLE_STATE_BIG	0
+#define CANDLE_STATE_SNALL	1
+
 
 class BigCandle :
 	public CGameObject
@@ -30,7 +36,7 @@ public:
 
 	~BigCandle();
 
-	virtual void Render() { animations[0]->Render(x, y); RenderBoundingBox(); }
+	virtual void Render() { animations[state]->Render(x, y); RenderBoundingBox(); }
 	virtual void Update(DWORD dt, vector<LPGAMEOBJECT>* coObjects = NULL);
 	virtual void GetBoundingBox(float& l, float& t, float& r, float& b);
 

@@ -42,6 +42,7 @@ public:
 	void getTiles(LPCWSTR filename);	//Add tiles from textures to tiles vector
 
 	void DrawMap();
+	void ClearMap();
 
 	int GetMapHeight() { return tileHeightNumber * TILEHEIGHT; }
 	int GetMapWidth() { return tileWidthNumber * TILEWIDTH; }

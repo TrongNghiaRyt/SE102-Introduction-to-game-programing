@@ -1,0 +1,5 @@
+Frame_Name	ID	left	top	right	bottom
+Door1		7000	0	0	96	284
+Door2_1		7001	99	0	146	95
+Door2_2		7002	136	0	183	95
+Door2_3		7003	191	0	239	95

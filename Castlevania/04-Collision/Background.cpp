@@ -95,7 +95,15 @@ void Background::DrawMap()
 
 			//draw the tile onto the scroll buffer
 			//tiles[tilenum]->Draw(tempx, tempy+64+16);
-			tiles[tilenum]->Draw(x, y + 64 + 16);
+			tiles[tilenum]->Draw(x, y + 64 + 16 -32);
 		}
 	}
+}
+
+void Background::ClearMap()
+{
+	mapData.clear();
+	cam_x = 0;
+	cam_y = 0;
+	tiles.clear();
 }

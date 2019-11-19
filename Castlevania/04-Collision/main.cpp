@@ -39,6 +39,7 @@
 #include "BigCandle.h"
 #include "CollectableObject.h"
 #include "Weapon.h"
+#include "HiddenObject.h"
 
 #define WINDOW_CLASS_NAME L"SampleWindow"
 #define MAIN_WINDOW_TITLE L"04 - Collision"
@@ -64,6 +65,7 @@
 #define ID_TEX_BIGCANDLE 1005
 #define ID_TEX_CANDLE	1010
 #define ID_TEX_ITEMS	1500
+#define ID_TEX_DOOR		1505
 
 CGame *game;
 
@@ -77,6 +79,8 @@ BigCandle* bigCandle;
 CollectableObject* collect;
 Weapon* wea;
 HUD hud;
+
+HiddenObject* hd;
 
 LPD3DXFONT fontNES = NULL;
 
@@ -97,7 +101,8 @@ void CSampleKeyHander::OnKeyDown(int KeyCode)
 {
 	DebugOut(L"[INFO] KeyDown: %d\n", KeyCode);
 	if (simon->isAttacking() ||
-		simon->GetState() == SIMON_STATE_FLASHING)
+		simon->GetState() == SIMON_STATE_FLASHING ||
+		simon->GetState() == SIMON_STATE_AUTOWALK)
 		return;
 
 	switch (KeyCode)
@@ -120,6 +125,14 @@ void CSampleKeyHander::OnKeyDown(int KeyCode)
 		break;
 	case DIK_NUMPAD0:
 		simon->TestAni();
+	case DIK_R:
+		simon->SetPosition(1000, 64 + 16 + 3 * 64 + 31);
+		simon->SetState(SIMON_STATE_IDLE);
+		HiddenObject* hd = new HiddenObject();
+		hd->SetState(OBJECT_STATE_AUTOWALK);
+		hd->SetPosition(16 + 32 * 5 + 4 * 64 * 4 + 64 + 64 + 32 + 16, 64 + 16 + 3 * 64 + 32 * 2);
+		objects.push_back(hd);
+
 	}
 }
 
@@ -139,7 +152,8 @@ void CSampleKeyHander::KeyState(BYTE* states)
 	//else
 	//	mario->SetState(MARIO_STATE_IDLE);
 	if (simon->isAttacking() ||
-		simon->GetState() == SIMON_STATE_FLASHING)
+		simon->GetState() == SIMON_STATE_FLASHING ||
+		simon->GetState() == SIMON_STATE_AUTOWALK)
 		return;
 
 	if (game->IsKeyDown(DIK_RIGHT))
@@ -197,9 +211,10 @@ void LoadResources()
 	textures->Add(ID_TEX_BIGCANDLE, L"textures\\items\\BigCandle.png", D3DCOLOR_XRGB(255, 255, 255));
 	textures->Add(ID_TEX_ITEMS, L"textures\\items\\Collectable.png", D3DCOLOR_XRGB(255, 255, 255));
 	textures->Add(ID_TEX_WEAPON, L"textures\\weapon.png", D3DCOLOR_XRGB(255, 255, 255));
+	textures->Add(ID_TEX_DOOR, L"textures\\door.png", D3DCOLOR_XRGB(255, 0, 255));
 
-	bg.getMap(L"textures\\map1_512.png");
-	bg.getMapData(L"text\\map11.txt");
+	bg.getMap(L"textures\\map1_2.png");
+	bg.getMapData(L"text\\map11_2.txt");
 	bg.getTiles(L"text\\map12_512.txt");
 	bg2.getMap(L"textures\\map2.png");
 	bg2.getMapData(L"text\\map21.txt");
@@ -322,7 +337,7 @@ void LoadResources()
 	//mario->SetPosition(50.0f, 0);
 	//objects.push_back(mario);
 	simon = new Simon();
-	simon->SetPosition(100, 100);
+	simon->SetPosition(1000, 100);
 	simon->getObjects(&objects);
 	objects.push_back(simon);
 
@@ -358,11 +373,10 @@ void LoadResources()
 	bigCandle->SetPosition(16 + 32 * 5 + 4 * 64 * 4, 64 + 16 + 3 * 64 + 32);
 	objects.push_back(bigCandle);
 
-	Weapon* wea = new Weapon();
-	wea->SetState(WEAPON_DANGGER);
-	wea->SetPosition(100, 300);
-	wea->getObjects(&objects);
-	//objects.push_back(wea);
+	HiddenObject* hd = new HiddenObject();
+	hd->SetState(OBJECT_STATE_AUTOWALK);
+	hd->SetPosition(16 + 32 * 5 + 4 * 64 * 4 + 64 + 64 +32 +16, 64 + 16 + 3 * 64 + 32*2);
+	objects.push_back(hd);
 
 }
 
@@ -486,7 +500,7 @@ void Render()
 		for (int i = 1; i < objects.size(); i++)
 			objects[i]->Render();
 		objects[0]->Render();
-
+		//objects[objects.size() - 1]->Render();
 		hud.Draw(); 
 
 		spriteHandler->End();
